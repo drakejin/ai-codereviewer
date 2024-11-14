@@ -32,23 +32,37 @@ interface PRDetails {
   pull_number: number;
   title: string;
   description: string;
+  changedFiles?: string[];
 }
 
 async function getPRDetails(): Promise<PRDetails> {
   const { repository, number } = JSON.parse(
     readFileSync(process.env.GITHUB_EVENT_PATH || "", "utf8")
   );
+
+  // PR 기본 정보 가져오기
   const prResponse = await octokit.pulls.get({
     owner: repository.owner.login,
     repo: repository.name,
     pull_number: number,
   });
+
+  // 변경된 파일 목록 가져오기
+  const filesResponse = await octokit.pulls.listFiles({
+    owner: repository.owner.login,
+    repo: repository.name,
+    pull_number: number,
+  });
+
+  const changedFiles = filesResponse.data.map(file => file.filename);
+
   return {
     owner: repository.owner.login,
     repo: repository.name,
     pull_number: number,
     title: prResponse.data.title ?? "",
     description: prResponse.data.body ?? "",
+    changedFiles, // 변경된 파일 목록 추가
   };
 }
 
@@ -332,7 +346,6 @@ async function main() {
   } else if (eventData.action === "synchronize") {
     const newBaseSha = eventData.before;
     const newHeadSha = eventData.after;
-
     const response = await octokit.repos.compareCommits({
       headers: {
         accept: "application/vnd.github.v3.diff",
@@ -342,7 +355,7 @@ async function main() {
       base: newBaseSha,
       head: newHeadSha,
     });
-
+    response.data.files = response.data.files?.filter(f => prDetails.changedFiles?.indexOf(f.filename) !== -1) // exclude files that are not changed
     diff = String(response.data);
   } else {
     console.log("Unsupported event:", process.env.GITHUB_EVENT_NAME);

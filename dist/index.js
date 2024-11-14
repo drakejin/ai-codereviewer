@@ -68,17 +68,26 @@ function getPRDetails() {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         const { repository, number } = JSON.parse((0, fs_1.readFileSync)(process.env.GITHUB_EVENT_PATH || "", "utf8"));
+        // PR 기본 정보 가져오기
         const prResponse = yield octokit.pulls.get({
             owner: repository.owner.login,
             repo: repository.name,
             pull_number: number,
         });
+        // 변경된 파일 목록 가져오기
+        const filesResponse = yield octokit.pulls.listFiles({
+            owner: repository.owner.login,
+            repo: repository.name,
+            pull_number: number,
+        });
+        const changedFiles = filesResponse.data.map(file => file.filename);
         return {
             owner: repository.owner.login,
             repo: repository.name,
             pull_number: number,
             title: (_a = prResponse.data.title) !== null && _a !== void 0 ? _a : "",
             description: (_b = prResponse.data.body) !== null && _b !== void 0 ? _b : "",
+            changedFiles, // 변경된 파일 목록 추가
         };
     });
 }
@@ -314,7 +323,7 @@ function createReviewComments(owner, repo, pull_number, comments) {
     });
 }
 function main() {
-    var _a;
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         const prDetails = yield getPRDetails();
         let diff;
@@ -334,6 +343,7 @@ function main() {
                 base: newBaseSha,
                 head: newHeadSha,
             });
+            response.data.files = (_b = response.data.files) === null || _b === void 0 ? void 0 : _b.filter(f => { var _a; return ((_a = prDetails.changedFiles) === null || _a === void 0 ? void 0 : _a.indexOf(f.filename)) !== -1; }); // exclude files that are not changed
             diff = String(response.data);
         }
         else {
