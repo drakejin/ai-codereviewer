@@ -125,22 +125,52 @@ function createPrompt(file, prDetails) {
 
 ### Code for review
 - file
+
   > ${file.to}
 
-- changes
-  \`\`\`
-   ${file.chunks.map((chunk) => chunk.content).join("\n")}
+- multiple diffs
+  data is type of parseDiff.File.chunks.
+  \`\`\` json
+  ${JSON.stringify(file.chunks)}
   \`\`\`
 
-- multiple diffs
-${file.chunks.map((chunk, index) => {
-        return `
-    - [no.${index + 1} diff]
-${chunk.changes.map((change) => {
-            // @ts-expect-error - ln and ln2 exists where needed
-            return `\n        - [line: ${change.ln ? change.ln : change.ln2}]:${change.content}`;
-        }).join("\n")}`;
-    }).join("\n")}
+- the json data schema is look like this: Chunk[]
+  \`\`\`
+  export interface Chunk {
+    content: string;
+    changes: Change[];
+    oldStart: number;
+    oldLines: number;
+    newStart: number;
+    newLines: number;
+  }
+
+  export interface NormalChange {
+    type: 'normal';
+    ln1: number;
+    ln2: number;
+    normal: true;
+    content: string;
+  }
+
+  export interface AddChange {
+    type: 'add';
+    add: true;
+    ln: number;
+    content: string;
+  }
+
+  export interface DeleteChange {
+    type: 'del';
+    del: true;
+    ln: number;
+    content: string;
+  }
+
+  export type ChangeType = 'normal' | 'add' | 'del';
+
+  export type Change = NormalChange | AddChange | DeleteChange;
+  \`\`\`
 
 
 # Reviewing Guide
