@@ -323,7 +323,7 @@ function createReviewComments(owner, repo, pull_number, comments) {
     });
 }
 function main() {
-    var _a, _b;
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         const prDetails = yield getPRDetails();
         let diff;
@@ -343,7 +343,7 @@ function main() {
                 base: newBaseSha,
                 head: newHeadSha,
             });
-            response.data.files = (_b = response.data.files) === null || _b === void 0 ? void 0 : _b.filter(f => { var _a; return ((_a = prDetails.changedFiles) === null || _a === void 0 ? void 0 : _a.indexOf(f.filename)) !== -1; }); // exclude files that are not changed
+            response.data.files = ((_c = (_b = response.data) === null || _b === void 0 ? void 0 : _b.files) !== null && _c !== void 0 ? _c : []).filter(f => { var _a; return ((_a = prDetails.changedFiles) === null || _a === void 0 ? void 0 : _a.indexOf(f.filename)) !== -1; }); // exclude files that are not changed
             diff = String(response.data);
         }
         else {

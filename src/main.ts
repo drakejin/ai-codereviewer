@@ -32,7 +32,7 @@ interface PRDetails {
   pull_number: number;
   title: string;
   description: string;
-  changedFiles?: string[];
+  changedFiles: string[];
 }
 
 async function getPRDetails(): Promise<PRDetails> {
@@ -355,7 +355,7 @@ async function main() {
       base: newBaseSha,
       head: newHeadSha,
     });
-    response.data.files = response.data.files?.filter(f => prDetails.changedFiles?.indexOf(f.filename) !== -1) // exclude files that are not changed
+    response.data.files = (response.data?.files ?? []).filter(f => prDetails.changedFiles?.indexOf(f.filename) !== -1) // exclude files that are not changed
     diff = String(response.data);
   } else {
     console.log("Unsupported event:", process.env.GITHUB_EVENT_NAME);
